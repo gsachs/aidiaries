@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator</title>
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        .calculator {
+            width: 320px;
+            background: #000;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #display {
+            width: 100%;
+            height: 120px;
+            margin-bottom: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 48px;
+            text-align: right;
+            padding: 20px;
+            box-sizing: border-box;
+            font-weight: 300;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 12px;
+        }
+        
+        button {
+            border: none;
+            border-radius: 50%;
+            height: 70px;
+            font-size: 28px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: filter 0.3s;
+        }
+
+        /* Number buttons */
+        button:not(.operator):not(.equals):not([onclick="clearDisplay()"]) {
+            background-color: #333333;
+            color: white;
+        }
+
+        /* Operator buttons */
+        .operator {
+            background-color: #FF9F0A;
+            color: white;
+        }
+
+        /* Clear button */
+        button[onclick="clearDisplay()"] {
+            background-color: #A5A5A5;
+            color: black;
+        }
+
+        /* Equals button */
+        .equals {
+            grid-column: 4;
+            grid-row: 5;
+            border-radius: 50% !important;
+            background-color: #FF9F0A;
+            color: white;
+        }
+
+        /* Hover effects */
+        button:hover {
+            filter: brightness(130%);
+        }
+
+        button:active {
+            filter: brightness(90%);
+        }
+
+        /* Zero button special styling */
+        button[onclick="appendNumber('0')"] {
+            grid-column: 1 / span 2;
+            border-radius: 35px;
+            text-align: left;
+            padding-left: 28px;
+        }
+
+        /* Make buttons maintain circular shape */
+        button {
+            position: relative;
+            padding: 0;
+            outline: none;
+        }
+
+        /* Responsive font sizes */
+        @media (max-width: 380px) {
+            .calculator {
+                width: 280px;
+            }
+            
+            button {
+                height: 60px;
+                font-size: 24px;
+            }
+            
+            #display {
+                font-size: 40px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" id="display" readonly value="0">
+        <div class="buttons">
+            <button onclick="clearDisplay()" style="background-color: #A5A5A5; color: black;">C</button>
+            <button onclick="appendOperator('±')" style="background-color: #A5A5A5; color: black;">±</button>
+            <button onclick="appendOperator('%')" style="background-color: #A5A5A5; color: black;">%</button>
+            <button onclick="appendOperator('÷')" class="operator">÷</button>
+            
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button onclick="appendOperator('×')" class="operator">×</button>
+            
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button onclick="appendOperator('-')" class="operator">−</button>
+            
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button onclick="appendOperator('+')" class="operator">+</button>
+            
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="appendNumber('.')">.</button>
+            <button onclick="calculate()" class="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentValue = '';
+        let previousValue = '';
+        let currentOperator = '';
+        const display = document.getElementById('display');
+
+        function formatNumberIndian(num) {
+            // Convert to string and split into integer and decimal parts
+            let [intPart, decPart] = num.toString().split('.');
+            
+            // Format integer part with Indian numbering system
+            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            // Further format for lakhs and crores (adding comma after first 3 digits if number is larger)
+            if (intPart.length > 3) {
+                intPart = intPart.replace(/^(\d+),(\d{3})/, '$1,$2');
+            }
+            
+            // Return formatted number (with decimal part if it exists)
+            return decPart ? `${intPart}.${decPart}` : intPart;
+        }
+
+        function appendNumber(num) {
+            if (display.value === '0' && num !== '.') {
+                currentValue = num;
+            } else {
+                if (num === '.' && currentValue.includes('.')) return;
+                currentValue += num;
+            }
+            display.value = formatNumberIndian(currentValue);
+        }
+
+        function appendOperator(operator) {
+            if (currentValue === '' && previousValue === '') return;
+            
+            if (previousValue !== '' && currentValue === '') {
+                currentOperator = operator;
+                display.value = formatNumberIndian(previousValue) + ' ' + operator + ' ';
+                return;
+            }
+
+            if (previousValue !== '' && currentOperator !== '' && currentValue !== '') {
+                calculate();
+            }
+
+            previousValue = currentValue;
+            currentValue = '';
+            currentOperator = operator;
+            display.value = formatNumberIndian(previousValue) + ' ' + operator + ' ';
+        }
+
+        function clearDisplay() {
+            currentValue = '';
+            previousValue = '';
+            currentOperator = '';
+            display.value = '0';
+        }
+
+        function calculate() {
+            if (currentValue === '' || previousValue === '' || currentOperator === '') {
+                return;
+            }
+
+            try {
+                let result;
+                const prev = parseFloat(previousValue);
+                const curr = parseFloat(currentValue);
+
+                switch(currentOperator) {
+                    case '+':
+                        result = prev + curr;
+                        break;
+                    case '-':
+                        result = prev - curr;
+                        break;
+                    case '×':
+                        result = prev * curr;
+                        break;
+                    case '÷':
+                        if (curr === 0) {
+                            throw new Error('Division by zero');
+                        }
+                        result = prev / curr;
+                        break;
+                    default:
+                        return;
+                }
+
+                result = Number(result.toFixed(8));
+                // Remove trailing zeros after decimal
+                result = Number(result).toString();
+                
+                display.value = formatNumberIndian(result);
+                previousValue = result;
+                currentValue = '';
+                currentOperator = '';
+            } catch (error) {
+                display.value = 'Error';
+                currentValue = '';
+                previousValue = '';
+                currentOperator = '';
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+            
+            if (/[0-9.]/.test(key)) {
+                appendNumber(key);
+            } else if (['+', '-'].includes(key)) {
+                appendOperator(key);
+            } else if (key === '*') {
+                appendOperator('×');
+            } else if (key === '/') {
+                appendOperator('÷');
+            } else if (key === 'Enter' || key === '=') {
+                calculate();
+            } else if (key === 'Escape') {
+                clearDisplay();
+            }
+        });
+
+        // Initialize display with 0
+        window.onload = function() {
+            display.value = '0';
+        }
+    </script>
+</body>
+</html> 
